@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title></title>
+    <link rel="stylesheet" type="text/css" href="./custom.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">  
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	
+</head>
+<body>
+    <form id="search" method="POST">
+        <input type="text" name="query">
+        <button type="submit">
+            Submit
+        </button>
+        <div id="loading">
+            <i class="fa fa-spinner fa-spin"></i>
+            Searching <span id="keyword"></span>...
+        </div>
+
+    </form>
+    <br>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Summary</th>
+                <th>Rating</th>
+                <th>Contact</th>
+                <th>Categories</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+
+
+    <script type="text/javascript">
+        var loading = function(show) {
+            if (show) {
+                $('#loading').css('visibility', 'visible');
+
+            } else {
+                $('#loading').css('visibility', 'hidden');
+            }
+        };
+
+        var displayResult = function(res) {
+            var html = '';
+
+            if (res.length > 0) {
+                $.each(res, function(key, value){
+                    html += `
+                        <tr>
+                            <td><img src="${value.imageUrl}" width="45"> <br> <a href="${value.titleUrl}" target="_blank">${value.title}</a></td>
+                            <td>${value.summary}</td>
+                            <td>
+                                <ul>
+                                    <li>ratingValue: ${value.rating.ratingValue}</li>
+                                    <li>ratingCount: ${value.rating.ratingCount}</li>
+                                    <li>bestRating: ${value.rating.bestRating}</li>
+                                    <li>worstRating: ${value.rating.worstRating}</li>
+                                </ul>
+                            </td>
+                            <td>
+                                <ul>
+                                    <li>addressLocality: ${value.contactInfo.address.addressLocality}</li>
+                                    <li>postalCode: ${value.contactInfo.address.postalCode}</li>
+                                    <li>streetAddress: ${value.contactInfo.address.streetAddress}</li>
+                                    <li>telephone: ${value.contactInfo.telephone}</li>
+                                </ul>
+                            </td>
+                            <td>
+                                ${displayCategories(value.categories)}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+            } else {
+                html = '<tr colspan=5><td>No data</td></tr>';
+            }
+
+            $('table tbody').html(html);
+        };
+
+        var displayCategories = function(categories) {
+            var html = '<ul>';
+            $.each(categories, function(key, value){
+                html += `<li><a href="${value.tagUrl}" target="_blank">${value.tagName}</a></li>`;
+            });
+            html +='</ul>';
+            return html;
+        };
+	    $( document ).ready(function() {
+            displayResult([]);
+            $('#search').submit(function(e) {
+                e.preventDefault();
+
+                var q = $('input[name=query]').val();
+
+                $('#keyword').text(q);
+                loading(true);
+
+                $.ajax({
+                    method: 'GET',
+                    url: '/localist-scrape?q='+q
+                })
+                .done(function(res) {
+                    console.log('res', res);
+                    loading(false);
+
+                    displayResult(res);
+                })
+                .fail(function (err) {
+                    loading(false);
+                    displayResult([]);
+                    alert('Request error. Please try again.');
+                });
+            });
+        });
+	</script>	
+</body>
+</html>	
